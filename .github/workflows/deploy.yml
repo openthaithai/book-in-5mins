@@ -4,21 +4,10 @@ on:
   push:
     branches:
       - main
-  workflow_dispatch:
-    inputs:
-      name:
-        type: choice
-        description: Deploy to production?
-        options: 
-          - Yes
-          - No
-      message:
-        required: true
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    if: github.event.inputs.name == 'Yes'
     environment: prod
     steps:
       - name: Checkout repository
