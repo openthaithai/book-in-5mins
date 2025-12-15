@@ -36,7 +36,7 @@ const BookDetailPage = () => {
         <div className="space-y-6">
             <div>
                 <div className="flex flex-wrap gap-2 mb-3">
-                    {book.category.map(cat => (
+                    {book.category.map((cat: string) => (
                         <span key={cat} className="text-xs font-semibold px-2 py-1 bg-secondary text-secondary-foreground rounded-md">
                             {cat}
                         </span>
