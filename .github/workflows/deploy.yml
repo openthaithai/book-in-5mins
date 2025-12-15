@@ -8,6 +8,7 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    environment: prod
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -20,16 +21,8 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-
       - name: Build project
         run: npm run build
-
-      - name: Debug Secrets
-        run: |
-          if [ -z "${{ secrets.HOST }}" ]; then echo "::error::HOST secret is not set"; else echo "HOST secret is set"; fi
-          if [ -z "${{ secrets.USERNAME }}" ]; then echo "::error::USERNAME secret is not set"; else echo "USERNAME secret is set"; fi
-          if [ -z "${{ secrets.KEY }}" ]; then echo "::error::KEY secret is not set"; else echo "KEY secret is set"; fi
-
 
       - name: Deploy via SCP
         uses: appleboy/scp-action@master
