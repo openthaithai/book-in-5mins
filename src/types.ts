@@ -5,9 +5,11 @@ export interface BookSummary {
   coverImage: string;
   category: string[];
   readingTime: number; // minutes
-  oneLiner: string; // single line summary
-  keyTakeaways: string[]; // array of 3 points
-  actionItems: string[];
+  bigIdea: string; // The Big Idea (1 sentence)
+  keyTakeaways: string[]; // 3 Key Takeaways
+  application: string[]; // Real-World Application (Checklist/How-to)
+  insight: string; // Analyst's Insight
+  transformation: { before: string; after: string }[]; // Before & After
   quote: string;
   affiliateLink?: string;
   content?: string; // Markdown content for deep dive

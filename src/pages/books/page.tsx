@@ -1,16 +1,10 @@
-import { createFileRoute, Link } from '@tanstack/react-router'
-import { books } from '../data/books'
+import { Link, getRouteApi } from '@tanstack/react-router'
 import { ArrowLeft, Clock, ShoppingCart, Quote } from 'lucide-react'
 
-export const Route = createFileRoute('/books/$bookId')({
-  component: BookDetail,
-  loader: ({ params }) => {
-    return books.find(b => b.id === params.bookId)
-  },
-})
+const route = getRouteApi('/books/$bookId')
 
-function BookDetail() {
-  const book = Route.useLoaderData()
+const BookDetailPage = () => {
+  const book = route.useLoaderData()
 
   if (!book) {
       return (
@@ -57,9 +51,11 @@ function BookDetail() {
                 <span>{book.readingTime} min read</span>
             </div>
 
-            <blockquote className="border-l-4 border-primary pl-4 py-2 italic font-serif text-lg bg-muted/30 rounded-r-lg">
-                "{book.oneLiner}"
-            </blockquote>
+            {/* The Big Idea */}
+            <div className="border-l-4 border-primary pl-4 py-2 bg-muted/30 rounded-r-lg">
+                <h3 className="text-sm font-bold text-primary mb-1 uppercase tracking-wider">The Big Idea</h3>
+                <p className="italic font-serif text-lg leading-relaxed">"{book.bigIdea}"</p>
+            </div>
              
              {book.affiliateLink && (
                  <a 
@@ -77,52 +73,83 @@ function BookDetail() {
 
       {/* Content */}
       <div className="space-y-12">
-        {/* Quote of the Book */}
-        <section className="bg-primary/5 p-8 rounded-2xl border border-primary/10 text-center">
-            <Quote className="w-12 h-12 text-primary/20 mx-auto mb-4" />
-            <p className="text-2xl md:text-3xl font-serif italic font-medium leading-relaxed mb-6">
-                "{book.quote}"
-            </p>
-            <div className="text-sm font-bold tracking-widest uppercase text-muted-foreground">Quote of the Book</div>
-        </section>
 
         {/* 3 Key Takeaways */}
         <section>
             <h2 className="text-3xl font-bold mb-6 flex items-center gap-3">
                 <span className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground text-sm">3</span>
-                The Big Ideas
+                Key Takeaways
             </h2>
             <div className="grid gap-6">
                 {book.keyTakeaways.map((idea, i) => (
                     <div key={i} className="p-6 bg-card border rounded-xl shadow-sm hover:shadow-md transition-shadow">
-                        <h3 className="text-xl font-bold mb-2 text-primary">Key Takeaway {i + 1}</h3>
+                        <h3 className="text-xl font-bold mb-2 text-primary">Point {i + 1}</h3>
                         <p className="text-lg leading-relaxed text-card-foreground/80">{idea}</p>
                     </div>
                 ))}
             </div>
         </section>
 
-        {/* Action Plan */}
+        {/* Real-World Application */}
         <section className="bg-secondary/30 p-8 rounded-3xl border border-secondary shadow-sm">
             <h2 className="text-3xl font-bold mb-6 text-foreground flex items-center gap-3">
                 <span className="flex items-center justify-center w-10 h-10 rounded-full bg-white shadow-sm text-primary text-sm ring-4 ring-secondary">
                     <Clock className="w-5 h-5" />
                 </span>
-                Action Plan (Tomorrow)
+                Real-World Application
             </h2>
             <ul className="space-y-4">
-                {book.actionItems.map((item, i) => (
+                {book.application.map((item, i) => (
                     <li key={i} className="flex items-start gap-3 group">
-                        <input type="checkbox" className="mt-1.5 w-6 h-6 rounded-lg border-2 border-primary/30 text-primary focus:ring-primary/20 transition-all cursor-pointer bg-white checked:bg-primary" />
+                         <div className="mt-1.5 w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                            <span className="text-sm font-bold">{i + 1}</span>
+                         </div>
                         <span className="text-lg text-foreground/80 group-hover:text-foreground transition-colors font-medium leading-relaxed">{item}</span>
                     </li>
                 ))}
             </ul>
         </section>
+
+        {/* Analyst's Insight */}
+        <section className="bg-primary/5 p-8 rounded-2xl border border-primary/10">
+            <h2 className="text-2xl font-bold mb-4 text-primary flex items-center gap-2">
+                <Quote className="w-6 h-6" />
+                Analyst's Insight
+            </h2>
+            <p className="text-lg md:text-xl font-serif italic leading-relaxed text-foreground/90">
+                "{book.insight}"
+            </p>
+        </section>
+
+        {/* Before & After Transformation */}
+        <section>
+            <h2 className="text-3xl font-bold mb-6">Transformation</h2>
+            <div className="overflow-hidden rounded-xl border bg-card">
+                <div className="grid grid-cols-1 md:grid-cols-2">
+                    {/* Header */}
+                    <div className="hidden md:block p-4 bg-muted/50 border-b border-r font-bold text-center text-muted-foreground uppercase tracking-widest text-sm">Before</div>
+                    <div className="hidden md:block p-4 bg-primary/10 border-b font-bold text-center text-primary uppercase tracking-widest text-sm">After</div>
+
+                    {book.transformation.map((item, i) => (
+                        <div key={i} className="contents md:contents">
+                             {/* Mobile Header, shown for each item on small screens if we want, but simple stacked is better */}
+                             <div className="p-4 border-b md:border-r border-border md:last:border-b-0 bg-muted/10">
+                                <span className="md:hidden text-xs font-bold text-muted-foreground uppercase mb-1 block">Before</span>
+                                <p className="text-muted-foreground">{item.before}</p>
+                             </div>
+                             <div className="p-4 border-b last:border-b-0 border-border bg-primary/5">
+                                <span className="md:hidden text-xs font-bold text-primary uppercase mb-1 block">After</span>
+                                <p className="text-foreground font-medium">{item.after}</p>
+                             </div>
+                        </div>
+                    ))}
+                </div>
+            </div>
+        </section>
         
         {/* Deep Dive Content (if available) */}
         {book.content && (
-            <section className="prose prose-lg dark:prose-invert max-w-none">
+            <section className="prose prose-lg dark:prose-invert max-w-none pt-8 border-t">
                 {/* Normally we would render markdown here, keeping it simple for now */}
                 <h2 className="text-3xl font-bold mb-6">Detailed Summary</h2>
                 <div className="whitespace-pre-wrap font-serif text-lg leading-loose">
@@ -134,3 +161,5 @@ function BookDetail() {
     </div>
   )
 }
+
+export default BookDetailPage
