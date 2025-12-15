@@ -18,7 +18,7 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' || github.event.inputs.name == 'Yes'
+    if: github.event.inputs.name == 'Yes'
     environment: prod
     steps:
       - name: Checkout repository
