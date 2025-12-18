@@ -20,11 +20,13 @@ export function BookCard({ book }: BookCardProps) {
             }}
             className="w-full h-full object-cover rounded-t-2xl shadow-md transform group-hover:scale-105 group-hover:rotate-1 transition-all duration-500"
         />
-        <div className="absolute top-6 left-6 z-20">
-             <span className="text-xs font-bold text-foreground/80 bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-sm">
-                <Clock className="w-3.5 h-3.5 text-primary" />
-                {book.readingTime} min
-            </span>
+            <div className="absolute top-6 left-6 z-20">
+             {book.readingTime && (
+                 <span className="text-xs font-bold text-foreground/80 bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-full flex items-center gap-1.5 shadow-sm">
+                    <Clock className="w-3.5 h-3.5 text-primary" />
+                    {book.readingTime} min
+                </span>
+             )}
         </div>
       </div>
 
@@ -33,7 +35,7 @@ export function BookCard({ book }: BookCardProps) {
         <div>
              <div className="text-xs font-bold text-accent justify-start flex items-center gap-2 mb-2">
                 <span className="w-2 h-2 rounded-full bg-accent"></span>
-                {book.category[0].toUpperCase()}
+                {book.category?.[0]?.toUpperCase() || 'GENERAL'}
             </div>
             <h3 className="text-2xl font-bold font-sans tracking-tight leading-tight group-hover:text-primary transition-colors line-clamp-2">
               {book.title}
@@ -42,7 +44,7 @@ export function BookCard({ book }: BookCardProps) {
         </div>
         
         <p className="text-base leading-relaxed text-foreground/80 font-serif line-clamp-3">
-          {book.bigIdea}
+          {book.bigIdea || book.description || "No description available."}
         </p>
       </div>
 
