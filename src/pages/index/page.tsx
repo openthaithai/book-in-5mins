@@ -18,33 +18,18 @@ const IndexPage = () => {
         setIsLoading(true)
         setIsSearching(true)
         try {
-            const response = await fetch(`https://openlibrary.org/search.json?q=${encodeURIComponent(searchQuery)}&limit=12`)
+            const response = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(searchQuery)}&maxResults=12`)
             const data = await response.json()
             
-            const results = data.docs.map((doc: any) => ({
-                id: doc.key.replace('/works/', ''),
-                title: doc.title,
-                author: doc.author_name?.[0] || 'Unknown Author',
-                coverImage: doc.cover_i ? `https://covers.openlibrary.org/b/id/${doc.cover_i}-L.jpg` : 'https://placehold.co/400x600/e07a5f/white?text=No+Cover',
-                category: ['Productivity'], // Default category for search results
-                readingTime: 5,
-                bigIdea: "This book has been found via search. The AI is analyzing its core message...",
-                keyTakeaways: [
-                    "Insight analysis pending...",
-                    "Key concepts are being extracted...",
-                    "Summary generation in progress..."
-                ],
-                application: [
-                     "Read this book to learn more.",
-                     "Apply its principles to your life.",
-                     "Share your learnings with others."
-                ],
-                insight: "This title was retrieved from the Open Library database.",
-                transformation: [
-                    { before: "Unknown", after: "Knowledgeable" }
-                ],
-                quote: "A book is a dream that you hold in your hand.",
-                content: "## Content Loading\n\nThis content is being fetched dynamically."
+            const results = (data.items || []).map((item: any) => ({
+                id: item.id,
+                title: item.volumeInfo.title,
+                author: item.volumeInfo.authors?.[0] || 'Unknown Author',
+                coverImage: item.volumeInfo.imageLinks?.thumbnail?.replace('http:', 'https:') || 'https://placehold.co/400x600/e07a5f/white?text=No+Cover',
+                category: item.volumeInfo.categories?.slice(0, 1) || ['Productivity'],
+                readingTime: item.volumeInfo.pageCount ? Math.ceil(item.volumeInfo.pageCount / 30) : 5, // Estimate based on page count
+                description: item.volumeInfo.description,
+                affiliateLink: item.volumeInfo.infoLink
             }))
             setSearchResults(results)
         } catch (error) {

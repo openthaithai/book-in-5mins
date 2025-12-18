@@ -1,10 +1,15 @@
 import { Link, getRouteApi } from '@tanstack/react-router'
-import { ArrowLeft, Clock, ShoppingCart, Quote } from 'lucide-react'
+import { ArrowLeft, Clock, ShoppingCart, Quote, Sparkles, Loader2, ShoppingBag } from 'lucide-react'
+import { useState } from 'react'
+import { generateBookInsight } from '@/services/ai'
 
 const route = getRouteApi('/books/$bookId')
 
 const BookDetailPage = () => {
-  const book = route.useLoaderData()
+  const initialBook = route.useLoaderData()
+  const [book, setBook] = useState(initialBook)
+  const [isAnalyzing, setIsAnalyzing] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   if (!book) {
       return (
@@ -14,6 +19,22 @@ const BookDetailPage = () => {
           </div>
       )
   }
+
+  const handleAnalyze = async () => {
+    if (!book.description) return;
+    
+    setIsAnalyzing(true);
+    setError(null);
+    try {
+        const insights = await generateBookInsight(book.title, book.author, book.description);
+        setBook(prev => prev ? { ...prev, ...insights } : null);
+    } catch (err) {
+        setError("Failed to generate insights. Please check your API usage or key.");
+        console.error(err);
+    } finally {
+        setIsAnalyzing(false);
+    }
+  };
 
   return (
     <div className="container mx-auto px-4 py-8 max-w-4xl animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -47,27 +68,75 @@ const BookDetailPage = () => {
             </div>
 
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Clock className="w-4 h-4" />
-                <span>{book.readingTime} min read</span>
+                {book.readingTime && (
+                    <>
+                        <Clock className="w-4 h-4" />
+                        <span>{book.readingTime} min read</span>
+                    </>
+                )}
             </div>
 
             {/* The Big Idea */}
-            <div className="border-l-4 border-primary pl-4 py-2 bg-muted/30 rounded-r-lg">
-                <h3 className="text-sm font-bold text-primary mb-1 uppercase tracking-wider">The Big Idea</h3>
-                <p className="italic font-serif text-lg leading-relaxed">"{book.bigIdea}"</p>
-            </div>
+            {book.bigIdea ? (
+                <div className="border-l-4 border-primary pl-4 py-2 bg-muted/30 rounded-r-lg animate-in fade-in slide-in-from-left-2 duration-700">
+                    <h3 className="text-sm font-bold text-primary mb-1 uppercase tracking-wider">The Big Idea</h3>
+                    <p className="italic font-serif text-lg leading-relaxed">"{book.bigIdea}"</p>
+                </div>
+            ) : (
+                <div className="flex flex-col gap-2">
+                     <button 
+                        onClick={handleAnalyze} 
+                        disabled={isAnalyzing || !book.description}
+                        className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-bold hover:from-indigo-600 hover:to-purple-700 transition-all shadow-md disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                        {isAnalyzing ? (
+                            <>
+                                <Loader2 className="w-5 h-5 animate-spin" />
+                                Analyzing Book...
+                            </>
+                        ) : (
+                            <>
+                                <Sparkles className="w-5 h-5" />
+                                Generate Insights with Gemini
+                            </>
+                        )}
+                    </button>
+                    {error && <p className="text-sm text-red-500 mt-1">{error}</p>}
+                    {!book.description && <p className="text-sm text-muted-foreground italic">No description available to analyze.</p>}
+                </div>
+            )}
              
-             {book.affiliateLink && (
+             <div className="flex flex-nowrap overflow-x-auto pb-2 gap-3 mt-4 scrollbar-hide">
+                 {book.affiliateLink && (
+                     <a 
+                        href={book.affiliateLink} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center px-4 py-2 rounded-full bg-orange-600 text-white text-sm font-bold hover:bg-orange-700 transition-colors shadow-md whitespace-nowrap shrink-0"
+                    >
+                        <ShoppingCart className="w-4 h-4 mr-2" />
+                        Buy on Amazon
+                     </a>
+                 )}
                  <a 
-                    href={book.affiliateLink} 
+                    href={`https://shopee.co.th/search?keyword=${encodeURIComponent(book.title)}`}
                     target="_blank" 
                     rel="noopener noreferrer"
-                    className="inline-flex items-center px-6 py-3 rounded-full bg-orange-600 text-white font-bold hover:bg-orange-700 transition-colors shadow-md"
+                    className="inline-flex items-center px-4 py-2 rounded-full bg-[#ee4d2d] text-white text-sm font-bold hover:bg-[#d73f1f] transition-colors shadow-md whitespace-nowrap shrink-0"
                 >
-                    <ShoppingCart className="w-5 h-5 mr-2" />
-                    Buy this book
+                    <ShoppingBag className="w-4 h-4 mr-2" />
+                    Buy on Shopee
                  </a>
-             )}
+                 <a 
+                    href={`https://www.lazada.co.th/catalog/?q=${encodeURIComponent(book.title)}`}
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center px-4 py-2 rounded-full bg-[#0f146d] text-white text-sm font-bold hover:bg-[#0c105c] transition-colors shadow-md whitespace-nowrap shrink-0"
+                >
+                    <ShoppingBag className="w-4 h-4 mr-2" />
+                    Buy on Lazada
+                 </a>
+             </div>
         </div>
       </div>
 
@@ -75,77 +144,85 @@ const BookDetailPage = () => {
       <div className="space-y-12">
 
         {/* 3 Key Takeaways */}
-        <section>
-            <h2 className="text-3xl font-bold mb-6 flex items-center gap-3">
-                <span className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground text-sm">3</span>
-                Key Takeaways
-            </h2>
-            <div className="grid gap-6">
-                {book.keyTakeaways.map((idea, i) => (
-                    <div key={i} className="p-6 bg-card border rounded-xl shadow-sm hover:shadow-md transition-shadow">
-                        <h3 className="text-xl font-bold mb-2 text-primary">Point {i + 1}</h3>
-                        <p className="text-lg leading-relaxed text-card-foreground/80">{idea}</p>
-                    </div>
-                ))}
-            </div>
-        </section>
-
-        {/* Real-World Application */}
-        <section className="bg-secondary/30 p-8 rounded-3xl border border-secondary shadow-sm">
-            <h2 className="text-3xl font-bold mb-6 text-foreground flex items-center gap-3">
-                <span className="flex items-center justify-center w-10 h-10 rounded-full bg-white shadow-sm text-primary text-sm ring-4 ring-secondary">
-                    <Clock className="w-5 h-5" />
-                </span>
-                Real-World Application
-            </h2>
-            <ul className="space-y-4">
-                {book.application.map((item, i) => (
-                    <li key={i} className="flex items-start gap-3 group">
-                         <div className="mt-1.5 w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0">
-                            <span className="text-sm font-bold">{i + 1}</span>
-                         </div>
-                        <span className="text-lg text-foreground/80 group-hover:text-foreground transition-colors font-medium leading-relaxed">{item}</span>
-                    </li>
-                ))}
-            </ul>
-        </section>
-
-        {/* Analyst's Insight */}
-        <section className="bg-primary/5 p-8 rounded-2xl border border-primary/10">
-            <h2 className="text-2xl font-bold mb-4 text-primary flex items-center gap-2">
-                <Quote className="w-6 h-6" />
-                Analyst's Insight
-            </h2>
-            <p className="text-lg md:text-xl font-serif italic leading-relaxed text-foreground/90">
-                "{book.insight}"
-            </p>
-        </section>
-
-        {/* Before & After Transformation */}
-        <section>
-            <h2 className="text-3xl font-bold mb-6">Transformation</h2>
-            <div className="overflow-hidden rounded-xl border bg-card">
-                <div className="grid grid-cols-1 md:grid-cols-2">
-                    {/* Header */}
-                    <div className="hidden md:block p-4 bg-muted/50 border-b border-r font-bold text-center text-muted-foreground uppercase tracking-widest text-sm">Before</div>
-                    <div className="hidden md:block p-4 bg-primary/10 border-b font-bold text-center text-primary uppercase tracking-widest text-sm">After</div>
-
-                    {book.transformation.map((item, i) => (
-                        <div key={i} className="contents md:contents">
-                             {/* Mobile Header, shown for each item on small screens if we want, but simple stacked is better */}
-                             <div className="p-4 border-b md:border-r border-border md:last:border-b-0 bg-muted/10">
-                                <span className="md:hidden text-xs font-bold text-muted-foreground uppercase mb-1 block">Before</span>
-                                <p className="text-muted-foreground">{item.before}</p>
-                             </div>
-                             <div className="p-4 border-b last:border-b-0 border-border bg-primary/5">
-                                <span className="md:hidden text-xs font-bold text-primary uppercase mb-1 block">After</span>
-                                <p className="text-foreground font-medium">{item.after}</p>
-                             </div>
+        {book.keyTakeaways && book.keyTakeaways.length > 0 && (
+            <section className="animate-in fade-in slide-in-from-bottom-8 duration-700 delay-100">
+                <h2 className="text-3xl font-bold mb-6 flex items-center gap-3">
+                    <span className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground text-sm">3</span>
+                    Key Takeaways
+                </h2>
+                <div className="grid gap-6">
+                    {book.keyTakeaways.map((idea, i) => (
+                        <div key={i} className="p-6 bg-card border rounded-xl shadow-sm hover:shadow-md transition-shadow">
+                            <h3 className="text-xl font-bold mb-2 text-primary">Point {i + 1}</h3>
+                            <p className="text-lg leading-relaxed text-card-foreground/80">{idea}</p>
                         </div>
                     ))}
                 </div>
-            </div>
-        </section>
+            </section>
+        )}
+
+        {/* Real-World Application */}
+        {book.application && book.application.length > 0 && (
+            <section className="bg-secondary/30 p-8 rounded-3xl border border-secondary shadow-sm animate-in fade-in slide-in-from-bottom-8 duration-700 delay-200">
+                <h2 className="text-3xl font-bold mb-6 text-foreground flex items-center gap-3">
+                    <span className="flex items-center justify-center w-10 h-10 rounded-full bg-white shadow-sm text-primary text-sm ring-4 ring-secondary">
+                        <Clock className="w-5 h-5" />
+                    </span>
+                    Real-World Application
+                </h2>
+                <ul className="space-y-4">
+                    {book.application.map((item, i) => (
+                        <li key={i} className="flex items-start gap-3 group">
+                             <div className="mt-1.5 w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                                <span className="text-sm font-bold">{i + 1}</span>
+                             </div>
+                            <span className="text-lg text-foreground/80 group-hover:text-foreground transition-colors font-medium leading-relaxed">{item}</span>
+                        </li>
+                    ))}
+                </ul>
+            </section>
+        )}
+
+        {/* Analyst's Insight */}
+        {book.insight && (
+            <section className="bg-primary/5 p-8 rounded-2xl border border-primary/10 animate-in fade-in slide-in-from-bottom-8 duration-700 delay-300">
+                <h2 className="text-2xl font-bold mb-4 text-primary flex items-center gap-2">
+                    <Quote className="w-6 h-6" />
+                    Analyst's Insight
+                </h2>
+                <p className="text-lg md:text-xl font-serif italic leading-relaxed text-foreground/90">
+                    "{book.insight}"
+                </p>
+            </section>
+        )}
+
+        {/* Before & After Transformation */}
+        {book.transformation && book.transformation.length > 0 && (
+            <section>
+                <h2 className="text-3xl font-bold mb-6">Transformation</h2>
+                <div className="overflow-hidden rounded-xl border bg-card">
+                    <div className="grid grid-cols-1 md:grid-cols-2">
+                        {/* Header */}
+                        <div className="hidden md:block p-4 bg-muted/50 border-b border-r font-bold text-center text-muted-foreground uppercase tracking-widest text-sm">Before</div>
+                        <div className="hidden md:block p-4 bg-primary/10 border-b font-bold text-center text-primary uppercase tracking-widest text-sm">After</div>
+
+                        {book.transformation.map((item, i) => (
+                            <div key={i} className="contents md:contents">
+                                 {/* Mobile Header, shown for each item on small screens if we want, but simple stacked is better */}
+                                 <div className="p-4 border-b md:border-r border-border md:last:border-b-0 bg-muted/10">
+                                    <span className="md:hidden text-xs font-bold text-muted-foreground uppercase mb-1 block">Before</span>
+                                    <p className="text-muted-foreground">{item.before}</p>
+                                 </div>
+                                 <div className="p-4 border-b last:border-b-0 border-border bg-primary/5">
+                                    <span className="md:hidden text-xs font-bold text-primary uppercase mb-1 block">After</span>
+                                    <p className="text-foreground font-medium">{item.after}</p>
+                                 </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </section>
+        )}
         
         {/* Deep Dive Content (if available) */}
         {book.content && (
@@ -157,6 +234,13 @@ const BookDetailPage = () => {
                 </div>
             </section>
         )}
+
+        {/* AI Disclaimer */}
+        <div className="py-6 border-t mt-8 text-center">
+            <p className="text-sm text-muted-foreground italic max-w-2xl mx-auto">
+                Disclaimer: The insights, takeaways, and summaries presented above are generated by AI and may vary from the original text. Please use them as a supplementary guide.
+            </p>
+        </div>
       </div>
     </div>
   )
